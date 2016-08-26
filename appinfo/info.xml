@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<info>
+    <id>forcedelete</id>
+    <name>Force Delete</name>
+    <description>test</description>
+    <licence>AGPL</licence>
+    <author>CurlyYang</author>
+    <version>0.0.1</version>
+    <namespace>ForceDelete</namespace>
+    <category>other</category>
+    <dependencies>
+        <owncloud min-version="8" />
+    </dependencies>
+</info>
