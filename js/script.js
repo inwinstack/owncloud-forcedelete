@@ -36,7 +36,7 @@ OCA.ForceDelete  = {
             $('.filename .fileactions .action-menu').click(function() {
                 var $tr = $(this).closest('tr');
                 var attribute = FileList.getModelForFile(String($tr.data('file'))).attributes;
-
+                
                 if('mountType' in attribute) {
                     $tr.find('.filename .fileActionsMenu ul .action-force').closest('li').remove();
 
@@ -56,22 +56,28 @@ OCA.ForceDelete  = {
     
                 });
             });
+
+
+            //$('.filename .fileActionMenu ul .action-delete')
         });
     },
 
     registerFileAction: function () {
         var img = OC.imagePath('core', 'actions/close');
-        OCA.Files.fileActions.register(
-            'all',
-            t(this.appName, 'Force Delete'),
-            OC.PERMISSION_DELETE,
-            OC.imagePath('core', 'actions/close'),
-            function(file) {
+        OCA.Files.fileActions.registerAction({
+            mime: 'all',
+            name: 'force',
+            displayName: t(this.appName, 'Force Delete'),
+            permissions: OC.PERMISSION_DELETE,
+            icon: function() {
+              return OC.imagePath('core', 'actions/close')
+            },
+            actionHandler: function(file, context) {
                 var path = FileList.getCurrentDirectory();
                 OCA.ForceDelete.delete(path, FileList.getModelForFile(file).attributes);
             }
 
-        );
+        });
 
         //append button to Actions
         var el = $('#app-content-files #headerName .selectedActions');
@@ -97,41 +103,49 @@ OCA.ForceDelete  = {
     },
 
     delete: function(path, files) {
+      OC.dialogs.confirm(
+        t('forcedelete', 'Are you sure to force delete this file?'),
+        t('forcedelete', 'File Delete'),
+        function(dialogValue) {
+          if(dialogValue) {
+            if($.isArray(files)) {
+                var selectedFiles = [];
+                
+                for(var i=0; i< files.length;i++) {
 
-        if($.isArray(files)) {
-            var selectedFiles = [];
-            
-            for(var i=0; i< files.length;i++) {
+                    if('mountType' in FileList.getModelForFile(files[i].name).attributes) {
+                        OC.Notification.showTemporary(t(OCA.ForceDelete.appName,files[i].name + 'is not a local file'));
+                        continue;
+                    }
 
-                if('mountType' in FileList.getModelForFile(files[i].name).attributes) {
-                    OC.Notification.showTemporary(t(OCA.ForceDelete.appName,files[i].name + 'is not a local file'));
-                    continue;
+                    selectedFiles.push({'path': path+files[i].name, 'isdir': files[i].type == 'dir' ? true : false, name: files[i].name});
                 }
 
-                selectedFiles.push({'path': path+files[i].name, 'isdir': files[i].type == 'dir' ? true : false});
-            }
+                files = selectedFiles;
 
-            files = selectedFiles;
-
-        } else {
+            } else {
+                
+                files = [{'path': path+files.name, 'isdir': files.type == 'dir' ? true : false, name: files.name}];
             
-            files = {'path': path+files.name, 'isdir': files.type == 'dir' ? true : false};
-        
-        }
-
-        $.ajax({
-            method: 'POST',
-            url: OC.generateUrl('/apps/forcedelete/deleteFile'),
-            data: {
-                files: files
             }
 
-        }).done(function(data) {
-            console.dir(data);
-            //data.status && FileList.remove(file);  
-        
-        });
-        
+            $.ajax({
+                method: 'POST',
+                url: OC.generateUrl('/apps/forcedelete/deleteFile'),
+                data: {
+                    files: files
+                }
+
+            }).done(function(data) {
+                  
+                for(var i = 0; i < files.length; i++) {
+                  
+                  data[i] && FileList.remove(files[i].name);
+                }
+
+            });
+        }
+      });
     },
 }
 
