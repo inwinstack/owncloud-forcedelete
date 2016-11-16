@@ -32,7 +32,7 @@ class ForceDeleteController extends Controller {
 	 */
 	public function deleteFile($files) {
         if(array_key_exists('path',$files)) {
-            return new DataResponse([$this->deleteAction->forceDeleteFile($files['isdir'], $files['path'])]);
+            return new DataResponse(['status' => $this->deleteAction->forceDeleteFile($files['isdir'], $files['path'])]);
 
 
         } else {
